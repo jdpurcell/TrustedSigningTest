@@ -24,7 +24,7 @@ jobs:
           $catalogPath = Join-Path $bin 'unsigned.txt'
 
           $unsignedFiles = Get-ChildItem -Path $bin -Include *.exe,*.dll -Recurse | Where-Object {
-            (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid'
+            (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid' -and $_.Name -ne 'opengl32sw.dll'
           }
 
           $relativePaths = $unsignedFiles | ForEach-Object {
