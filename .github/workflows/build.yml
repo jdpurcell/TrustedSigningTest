@@ -16,22 +16,39 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/jdpurcell/qView/releases/download/v2025-11-17.70f47d0/${{ matrix.fileName }}.zip" -OutFile temp.zip
           Expand-Archive temp.zip -DestinationPath bin
 
-      # - name: Signing (Windows)
-      #   if: runner.os == 'Windows' && (inputs.codeSign || (env.AUTOSIGN_REQUESTED == 'true' && env.CAN_AUTOSIGN_WINDOWS == 'true'))
-      #   uses: azure/trusted-signing-action@v0
-      #   with:
-      #     azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      #     azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      #     azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-      #     endpoint: ${{ vars.AZURE_ENDPOINT }}
-      #     trusted-signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
-      #     certificate-profile-name: ${{ vars.AZURE_SIGNING_CERTIFICATE }}
-      #     files-folder: ${{ github.workspace }}\bin
-      #     files-folder-filter: exe,dll
-      #     files-folder-recurse: true
-      #     file-digest: SHA256
-      #     timestamp-rfc3161: http://timestamp.acs.microsoft.com
-      #     timestamp-digest: SHA256
+      - name: Build unsigned file list
+        shell: pwsh
+        run: |
+          $workspace = $Env:GITHUB_WORKSPACE
+          $bin = Join-Path $workspace 'bin'
+          $catalogPath = Join-Path $bin 'unsigned.txt'
+
+          $unsignedFiles = Get-ChildItem -Path $bin -Include *.exe,*.dll -Recurse | Where-Object {
+            (Get-AuthenticodeSignature $_.FullName).Status -ne 'Valid'
+          }
+
+          $relativePaths = $unsignedFiles | ForEach-Object {
+            [System.IO.Path]::GetRelativePath($workspace, $_.FullName)
+          }
+
+          Set-Content -Path $catalogPath -Value $relativePaths -Encoding utf8
+
+    #   - name: Signing (Windows)
+    #     if: runner.os == 'Windows' && (inputs.codeSign || (env.AUTOSIGN_REQUESTED == 'true' && env.CAN_AUTOSIGN_WINDOWS == 'true'))
+    #     uses: azure/trusted-signing-action@v0
+    #     with:
+    #       azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    #       azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    #       azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+    #       endpoint: ${{ vars.AZURE_ENDPOINT }}
+    #       trusted-signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+    #       certificate-profile-name: ${{ vars.AZURE_SIGNING_CERTIFICATE }}
+    #       files-folder: ${{ github.workspace }}\bin
+    #       files-folder-filter: exe,dll
+    #       files-folder-recurse: true
+    #       file-digest: SHA256
+    #       timestamp-rfc3161: http://timestamp.acs.microsoft.com
+    #       timestamp-digest: SHA256
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v5
