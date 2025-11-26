@@ -38,7 +38,6 @@ jobs:
           Set-Content -Path $catalogPath -Value $relativePaths -Encoding utf8
 
       - name: Signing (Windows)
-        if: runner.os == 'Windows' && (inputs.codeSign || (env.AUTOSIGN_REQUESTED == 'true' && env.CAN_AUTOSIGN_WINDOWS == 'true'))
         uses: azure/trusted-signing-action@v0
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
