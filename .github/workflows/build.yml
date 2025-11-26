@@ -7,7 +7,7 @@ jobs:
       matrix:
         include:
           - runner: 'windows-2022'
-            fileName: 'qView-JDP-2025-11-17.70f47d0-Windows_64'
+            fileName: 'qView-JDP-2025-11-17.70f47d0-Windows_32'
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Download Archive
